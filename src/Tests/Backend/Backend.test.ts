@@ -20,7 +20,7 @@ import {backendRegistrationApi, globalBackendMap, globalExecutorArray} from '../
 import {Backend} from '../../Backend/Backend';
 import {Compiler, CompilerBase} from '../../Backend/Compiler';
 import {Executor, ExecutorBase} from '../../Backend/Executor';
-import { ONEToolchain } from '../../Backend/ONE/ONEToolchain';
+import {ONEToolchain} from '../../Backend/ONE/ONEToolchain';
 import {gToolchainEnvMap} from '../../Toolchain/ToolchainEnv';
 
 const oneBackendName = 'ONE';
@@ -56,7 +56,7 @@ class ExecutorMockup extends ExecutorBase {
 
 suite('Backend', function() {
   suite('backendRegistrationApi', function() {
-    test('registers a ONEToolchain', function(){
+    test('registers a ONEToolchain', function() {
       let registrationAPI = backendRegistrationApi();
       let oneBackend = new ONEToolchain();
       assert.strictEqual(Object.entries(globalBackendMap).length, 1);
@@ -78,18 +78,19 @@ suite('Backend', function() {
 
       let backend = new BackendMockup();
       registrationAPI.registerBackend(backend);
-      
+
       const entries = Object.entries(globalBackendMap);
       assert.strictEqual(entries.length, 2);
 
       // this runs once
       for (const [key, value] of entries) {
-        if(key === oneBackendName)
-            {continue;}
+        if (key === oneBackendName) {
+          continue;
+        }
         assert.strictEqual(key, backendName);
         assert.deepStrictEqual(value, backend);
       }
-      
+
       assert.strictEqual(globalExecutorArray.length, 1);
       for (const executor of globalExecutorArray) {
         assert.deepStrictEqual(executor, backend.executor());

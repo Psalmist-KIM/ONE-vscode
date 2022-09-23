@@ -14,17 +14,22 @@
  * limitations under the License.
  */
 
+import { execSync } from 'child_process';
 import {Backend} from '../Backend';
 import {Command} from '../Command';
 import {Compiler} from '../Compiler';
 import {Executor} from '../Executor';
-import {Toolchains} from '../Toolchain';
+import {ToolchainInfo, Toolchains} from '../Toolchain';
+import { DebianToolchain } from '../ToolchainImpl/DebianToolchain';
+import { Version } from '../Version';
 
 class ToolchainCompiler implements Compiler {
   private readonly toolchainTypes: string[];
+  private readonly toolchainName: string;
 
   constructor() {
-    this.toolchainTypes = [];
+    this.toolchainName = 'onecc-docker-test'
+    this.toolchainTypes = ['latest'];
   }
 
   getToolchainTypes(): string[] {
@@ -32,15 +37,44 @@ class ToolchainCompiler implements Compiler {
   }
 
   getToolchains(_toolchainType: string, _start: number, _count: number): Toolchains {
-    throw Error('Invalid getToolchains call');
+    // throw Error('Invalid getToolchains call');
+    if(parseInt(execSync(`apt-cache show ${this.toolchainName} > /dev/null 2>&1; echo $?`)
+    .toString().trim()) !== 0) {
+      throw Error("prerequites");
+    }
+
+    let availableToolchains = new Toolchains();
+
+    execSync(`apt-cache show ${this.toolchainName} | grep Version | awk '{print $2}'`)
+    .toString()
+    .trim()
+    .split('\n')
+    .map((str) => str)
+    .forEach((version) => {
+      version = version+'~test';
+      version.split('/[.\\~]+/').forEach((e) => console.log(e));
+      availableToolchains.push(new DebianToolchain(new ToolchainInfo(this.toolchainName, 'test', new Version(1,0,0))));
+    })
+    return availableToolchains;
   }
 
   getInstalledToolchains(_toolchainType: string): Toolchains {
-    throw Error('Invalid getInstalledToolchains call');
+    // throw Error('Invalid getInstalledToolchains call');
+    // 설치하면 오케이..!
+    console.log(this.getToolchains(this.toolchainTypes[0],0,0)[0].installed().str());
+    return [];
   }
 
   prerequisitesForGetToolchains(): Command {
-    throw Error('Invalid prerequisitesForGetToolchains call');
+    // throw Error('Invalid prerequisitesForGetToolchains call');
+    const cmd = new Command('add-apt-repository');
+    cmd.push('ppa:psalmist-kim/ppa');
+    cmd.push('-y');
+    cmd.push('&&');
+    cmd.push('apt-get');
+    cmd.push('update');
+    cmd.setRoot();
+    return cmd;
   }
 }
 
